@@ -3,46 +3,43 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    crane.url = "github:ipetkov/crane";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils }:
+  outputs = { self, nixpkgs, crane, rust-overlay, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
-        rustToolchain = pkgs.rust-bin.stable.latest.default;
+
+        craneLib = (crane.mkLib pkgs).overrideToolchain pkgs.rust-bin.stable.latest.default;
+
+        # Include Cargo sources + C headers for FFI
+        src = pkgs.lib.cleanSourceWith {
+          src = ./.;
+          filter = path: type:
+            (craneLib.filterCargoSources path type) ||
+            (builtins.match ".*\\.h$" path != null);
+        };
+
+        ffiLib = import ./nix/ffi.nix { inherit craneLib pkgs src; };
+        app = import ./nix/app.nix { inherit pkgs ffiLib; moduleSrc = ./module; };
       in
       {
         packages = {
-          lib = pkgs.rustPlatform.buildRustPackage {
-            pname = "hello_ffi";
-            version = "0.1.0";
-            src = ./.;
-            cargoLock = {
-              lockFile = ./Cargo.lock;
-              outputHashes = {
-                "nssa_core-0.1.0" = "sha256-GCByTWaLbDObTirW73Sx8cK+mWIIsUjVRime8uTjjMo=";
-              };
-            };
-            buildPhase = ''
-              cargo build --release -p hello_ffi
-            '';
-            installPhase = ''
-              mkdir -p $out/lib $out/include
-              cp target/release/libhello_ffi.so $out/lib/ 2>/dev/null || \
-              cp target/release/libhello_ffi.dylib $out/lib/ 2>/dev/null || true
-              cp hello_ffi/include/hello_program.h $out/include/
-            '';
-          };
-
-          default = self.packages.${system}.lib;
+          lib = ffiLib;
+          app = app;
+          default = app;
         };
 
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            rustToolchain
+            (rust-bin.stable.latest.default)
             pkg-config
             openssl
           ];
