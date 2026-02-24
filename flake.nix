@@ -20,7 +20,12 @@
             pname = "hello_ffi";
             version = "0.1.0";
             src = ./.;
-            cargoLock.lockFile = ./Cargo.lock;
+            cargoLock = {
+              lockFile = ./Cargo.lock;
+              outputHashes = {
+                "nssa_core-0.1.0" = "sha256-GCByTWaLbDObTirW73Sx8cK+mWIIsUjVRime8uTjjMo=";
+              };
+            };
             buildPhase = ''
               cargo build --release -p hello_ffi
             '';
