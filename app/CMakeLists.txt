@@ -11,16 +11,27 @@ set(MODULE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../module/src" CACHE PATH "Path to m
 set(HELLO_FFI_LIB "" CACHE FILEPATH "Path to libhello_ffi shared library")
 set(HELLO_FFI_INCLUDE "" CACHE PATH "Path to FFI include directory")
 
-find_package(Qt6 REQUIRED COMPONENTS Core Quick Qml Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Qml)
 
-add_executable(lez-hello-world-app
+# Bundle HelloWorldView.qml from the module QML directory
+set(HW_VIEW "${CMAKE_CURRENT_SOURCE_DIR}/../module/qml/HelloWorldView.qml")
+set_source_files_properties(${HW_VIEW} PROPERTIES QT_RESOURCE_ALIAS "HelloWorldView.qml")
+
+qt_add_executable(lez-hello-world-app
     main.cpp
     ${MODULE_SRC}/HelloWorldBridge.cpp
-    ${MODULE_SRC}/HelloWorldBridge.h
+)
+
+qt_add_resources(lez-hello-world-app "qml"
+    PREFIX "/"
+    FILES
+        main.qml
+        ${HW_VIEW}
 )
 
 target_include_directories(lez-hello-world-app PRIVATE
     ${MODULE_SRC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../module/include
     ${HELLO_FFI_INCLUDE}
 )
 
@@ -28,7 +39,6 @@ target_link_libraries(lez-hello-world-app PRIVATE
     Qt6::Core
     Qt6::Quick
     Qt6::Qml
-    Qt6::Gui
     ${HELLO_FFI_LIB}
 )
 

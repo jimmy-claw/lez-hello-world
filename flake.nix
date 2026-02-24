@@ -28,7 +28,7 @@
         };
 
         ffiLib = import ./nix/ffi.nix { inherit craneLib pkgs src; };
-        app = import ./nix/app.nix { inherit pkgs ffiLib; moduleSrc = ./module; appSrc = ./app; };
+        app = import ./nix/app.nix { inherit pkgs ffiLib; src = pkgs.lib.cleanSource ./.; };
       in
       {
         packages = {

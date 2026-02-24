@@ -1,21 +1,22 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <QDir>
+#include <QtQml>
 #include "HelloWorldBridge.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     QGuiApplication app(argc, argv);
 
     qmlRegisterType<HelloWorldBridge>("LezHelloWorld", 1, 0, "HelloWorldBridge");
 
     QQmlApplicationEngine engine;
-
-    QString appDir = QCoreApplication::applicationDirPath();
-    engine.addImportPath(appDir + "/../qml");
-    engine.load(QUrl::fromLocalFile(appDir + "/../share/main.qml"));
-
-    if (engine.rootObjects().isEmpty())
-        return -1;
+    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+        &app, [url](QObject *obj, const QUrl &objUrl) {
+            if (!obj && url == objUrl)
+                QCoreApplication::exit(-1);
+        }, Qt::QueuedConnection);
+    engine.load(url);
 
     return app.exec();
 }
