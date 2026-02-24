@@ -1,0 +1,14 @@
+[package]
+name = "hello_ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hello_core = { path = "../hello_core" }
+hello_program = { path = "../hello_program" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+nssa_core = { workspace = true }

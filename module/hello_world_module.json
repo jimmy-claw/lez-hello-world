@@ -1,0 +1,7 @@
+{
+    "name": "LEZ Hello World",
+    "version": "0.1.0",
+    "description": "A Hello World LEZ program that stores a name and returns a greeting",
+    "author": "jimmy-claw",
+    "dependencies": ["logos-execution-zone-module"]
+}
